@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 var ErrInvalidString = errors.New("invalid string")
@@ -15,30 +16,48 @@ func Unpack(s string) (string, error) {
 	i := 0
 
 	for i < n {
-		char := s[i]
+		char, size := utf8.DecodeRuneInString(s[i:])
+		if size == 0 {
+			break
+		}
 
-		if unicode.IsDigit(rune(char)) {
+
+		if unicode.IsDigit(char) {
 			return "", ErrInvalidString
 		}
 
-		i++
+		i += size 
 
-		if i < n && unicode.IsDigit(rune(s[i])) {
-			countStr := string(s[i])
-			i++
-			for i < n && unicode.IsDigit(rune(s[i])) {
-				countStr += string(s[i])
-				i++
-			}
-			count, err := strconv.Atoi(countStr)
-			if err != nil || count < 0 || count > 9 {
-				return "", ErrInvalidString
-			}
-			if count > 0 {
-				result.WriteString(strings.Repeat(string(char), count))
+		
+		if i < n {
+			nextChar, _ := utf8.DecodeRuneInString(s[i:])
+			if unicode.IsDigit(nextChar) {
+				countStr := string(nextChar)
+				i += utf8.RuneLen(nextChar)
+
+				for i < n {
+					nextChar, _ := utf8.DecodeRuneInString(s[i:])
+					if unicode.IsDigit(nextChar) {
+						countStr += string(nextChar)
+						i += utf8.RuneLen(nextChar)
+					} else {
+						break
+					}
+				}
+
+				count, err := strconv.Atoi(countStr)
+				if err != nil || count < 0 || count > 9 {
+					return "", ErrInvalidString
+				}
+
+				if count > 0 {
+					result.WriteString(strings.Repeat(string(char), count))
+				}
+			} else {
+				result.WriteRune(char)
 			}
 		} else {
-			result.WriteByte(char)
+			result.WriteRune(char)
 		}
 	}
 
