@@ -21,45 +21,40 @@ func Unpack(s string) (string, error) {
 			break
 		}
 
-
 		if unicode.IsDigit(char) {
 			return "", ErrInvalidString
 		}
 
-		i += size 
+		i += size
+		count := 1
 
-		
-		if i < n {
-			nextChar, _ := utf8.DecodeRuneInString(s[i:])
-			if unicode.IsDigit(nextChar) {
-				countStr := string(nextChar)
-				i += utf8.RuneLen(nextChar)
-
-				for i < n {
-					nextChar, _ := utf8.DecodeRuneInString(s[i:])
-					if unicode.IsDigit(nextChar) {
-						countStr += string(nextChar)
-						i += utf8.RuneLen(nextChar)
-					} else {
-						break
-					}
-				}
-
-				count, err := strconv.Atoi(countStr)
-				if err != nil || count < 0 || count > 9 {
-					return "", ErrInvalidString
-				}
-
-				if count > 0 {
-					result.WriteString(strings.Repeat(string(char), count))
-				}
-			} else {
-				result.WriteRune(char)
+		if i < n && unicode.IsDigit(rune(s[i])) {
+			var err error
+			count, err = getCount(s, &i)
+			if err != nil {
+				return "", err
 			}
-		} else {
-			result.WriteRune(char)
 		}
+
+		result.WriteString(strings.Repeat(string(char), count))
 	}
 
 	return result.String(), nil
+}
+
+func getCount(s string, index *int) (int, error) {
+	countStr := ""
+	n := len(s)
+
+	for *index < n && unicode.IsDigit(rune(s[*index])) {
+		countStr += string(s[*index])
+		(*index)++
+	}
+
+	count, err := strconv.Atoi(countStr)
+	if err != nil || count < 0 || count > 9 {
+		return 0, ErrInvalidString
+	}
+
+	return count, nil
 }
