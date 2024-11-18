@@ -48,8 +48,7 @@ var text2 = `Люди меня спрашивают, знаю ли я Тайло
 Между здоровенными потными титьками.
 Поплачь и ты.`
 
-var text3 = 
-`This film is dedicated
+var text3 = `This film is dedicated
 
 to friends and family
 
@@ -188,31 +187,31 @@ func TestTop10(t *testing.T) {
 	t.Run("positive test number two", func(t *testing.T) {
 		expected := []string{
 			"и",        // 6
-			"на",         // 4
-			"я",         // 4
-			"мужчины.",        // 3
-			"с",       // 3
-			"у",         // 3
-			"что", // 3
-			"Мы",      // 3
-			"Тайлора",        // 2
-			"Это",        // 2
+			"на",       // 4
+			"я",        // 4
+			"мужчины.", // 3
+			"с",        // 3
+			"у",        // 3
+			"что",      // 3
+			"Мы",       // 3
+			"Тайлора",  // 2
+			"Это",      // 2
 		}
 		require.Equal(t, expected, Top10(text2))
 	})
 
 	t.Run("positive test number three", func(t *testing.T) {
 		expected := []string{
-			"the",        // 8
-			"a",         // 4
-			"in",         // 4
-			"was",        // 3
-			"who",       // 3
-			"A",         // 3
+			"the", // 8
+			"a",   // 4
+			"in",  // 4
+			"was", // 3
+			"who", // 3
+			"A",   // 3
 			"The", // 2
-			"and",      // 2
-			"far",        // 2
-			"is",        // 2
+			"and", // 2
+			"far", // 2
+			"is",  // 2
 		}
 		require.Equal(t, expected, Top10(text3))
 	})
