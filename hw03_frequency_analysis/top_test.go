@@ -3,11 +3,116 @@ package hw03frequencyanalysis
 import (
 	"testing"
 
+	//nolint:depguard
 	"github.com/stretchr/testify/require"
 )
 
 // Change to true if needed.
 var taskWithAsteriskIsCompleted = false
+
+var text2 = `Люди меня спрашивают, знаю ли я Тайлора Дердана.
+Три минуты.
+Это все. Первый этаж.
+Не хочешь что-нибудь сказать на последок?
+Когда у тебя пистолет во рту тебя очень тяжело понять.
+Я ни о чем не могу думать.
+На секунду я забываю про этого Тайлора
+и всю эту идею со взрывом
+и думаю о том, на сколько грязен этот пистолет.
+Начинается самое увлекательное.
+Давно известно, мы причиняем боль тем, кого любим,
+но часто бывает и наоборот.
+Арена массового уничтожения, а у нас места в первом ряду.
+Подрывники из числа участников проекта "Разгром" нанесли
+гремучую смесь на опоры фундаментов дюжины зданий.
+Через пару минут будет взрыв и на месте нескольких
+кварталов останутся лишь дымящиеся руины.
+Я знаю об этом, потому что это известно Тайлору.
+Две с половиной минуты.
+Подумай обо всем что сделано.
+И тут я понял, что все это: пистолет, бомба, революция,
+как-то связано с девушкой по имени Марла Синглер.
+Боб, Боб с большими титьками.
+Это была группа поддержки для мужчин, больных раком яичек.
+А здоровенный амбал, который вешал на
+меня свои сопли, был Боб.
+Мы мужчины.
+Да, мы мужчины.
+Мы все равно мужчины.
+Восемь месяцев назад Бобу удалили оба яичка,
+затем гормонотерапия.
+Из-за избытка тестостерона в его организме начал
+вырабатываться эстроген и у него выросла грудь.
+Тут я и нашел себе место.
+Они опять будут резать мне грудь и выпускать жидкость.
+Между здоровенными потными титьками.
+Поплачь и ты.`
+
+var text3 = `This film is dedicated
+
+to friends and family
+
+who died
+
+while it was in the making.
+
+Heard about the guy
+
+who fell off a skyscraper?
+
+On his way down past each floor,
+
+he kept saying
+
+to reassure himself:
+
+''So far so good...
+
+''so far so good...''
+
+How you fall doesn't matter.
+
+lt's how you land!
+
+More rioting in the projects
+
+outside the city.
+
+Last night a mob of youths
+
+attacked a police station
+
+in the Muguet projects.
+
+Pitched battles
+
+left 14 officers injured.
+
+A mall and nearby buildings
+
+were damaged by looters
+
+who dispersed around 4 a.m.
+
+Alleged police brutality
+
+sparked the riots 2 days ago.
+
+A local teen was severely beaten
+
+under questioning.
+
+The officer was suspended.
+
+The victim, Abdel Ichaha,
+
+is in hospital
+
+in critical condition.
+
+Got a looter under arrest,
+
+a minor.`
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -78,5 +183,36 @@ func TestTop10(t *testing.T) {
 			}
 			require.Equal(t, expected, Top10(text))
 		}
+	})
+	t.Run("positive test number two", func(t *testing.T) {
+		expected := []string{
+			"и",        // 6
+			"на",       // 4
+			"я",        // 4
+			"мужчины.", // 3
+			"с",        // 3
+			"у",        // 3
+			"что",      // 3
+			"Мы",       // 3
+			"Тайлора",  // 2
+			"Это",      // 2
+		}
+		require.Equal(t, expected, Top10(text2))
+	})
+
+	t.Run("positive test number three", func(t *testing.T) {
+		expected := []string{
+			"the", // 8
+			"a",   // 4
+			"in",  // 4
+			"was", // 3
+			"who", // 3
+			"A",   // 3
+			"The", // 2
+			"and", // 2
+			"far", // 2
+			"is",  // 2
+		}
+		require.Equal(t, expected, Top10(text3))
 	})
 }
