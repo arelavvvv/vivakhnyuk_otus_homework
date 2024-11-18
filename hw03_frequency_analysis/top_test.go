@@ -48,6 +48,73 @@ var text2 = `Люди меня спрашивают, знаю ли я Тайло
 Между здоровенными потными титьками.
 Поплачь и ты.`
 
+var text3 = 
+`This film is dedicated
+
+to friends and family
+
+who died
+
+while it was in the making.
+
+Heard about the guy
+
+who fell off a skyscraper?
+
+On his way down past each floor,
+
+he kept saying
+
+to reassure himself:
+
+''So far so good...
+
+''so far so good...''
+
+How you fall doesn't matter.
+
+lt's how you land!
+
+More rioting in the projects
+
+outside the city.
+
+Last night a mob of youths
+
+attacked a police station
+
+in the Muguet projects.
+
+Pitched battles
+
+left 14 officers injured.
+
+A mall and nearby buildings
+
+were damaged by looters
+
+who dispersed around 4 a.m.
+
+Alleged police brutality
+
+sparked the riots 2 days ago.
+
+A local teen was severely beaten
+
+under questioning.
+
+The officer was suspended.
+
+The victim, Abdel Ichaha,
+
+is in hospital
+
+in critical condition.
+
+Got a looter under arrest,
+
+a minor.`
+
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
 	ступеньки собственным затылком:  бум-бум-бум.  Другого  способа
@@ -132,5 +199,21 @@ func TestTop10(t *testing.T) {
 			"Это",        // 2
 		}
 		require.Equal(t, expected, Top10(text2))
+	})
+
+	t.Run("positive test number three", func(t *testing.T) {
+		expected := []string{
+			"the",        // 8
+			"a",         // 4
+			"in",         // 4
+			"was",        // 3
+			"who",       // 3
+			"A",         // 3
+			"The", // 2
+			"and",      // 2
+			"far",        // 2
+			"is",        // 2
+		}
+		require.Equal(t, expected, Top10(text3))
 	})
 }
