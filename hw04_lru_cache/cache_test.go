@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"//nolint
 )
 
 func TestCache(t *testing.T) {
@@ -50,7 +50,47 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+		c := NewCache(3)
+
+		wasInCache := c.Set("aaa", 1)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("bbb", 2)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("ccc", 3)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("ddd", 4)
+		require.False(t, wasInCache)
+
+		val, ok := c.Get("aaa")
+		require.False(t, ok)
+		require.Nil(t, val)
+	})
+
+	t.Run("purge logic2", func(t *testing.T) {
+		c := NewCache(3)
+
+		wasInCache := c.Set("aaa", 1)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("bbb", 2)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("ccc", 3)
+		require.False(t, wasInCache)
+
+		c.Get("aaa")
+
+		c.Get("bbb")
+
+		wasInCache = c.Set("ddd", 4)
+		require.False(t, wasInCache)
+
+		val, ok := c.Get("ccc")
+		require.False(t, ok)
+		require.Nil(t, val)
 	})
 }
 
