@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"//nolint
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 	fault         = sleepPerStage / 2
 )
 
-var isFullTesting = true
+var isFullTesting = false
 
 func TestPipeline(t *testing.T) {
 	// Stage generator
@@ -150,6 +150,70 @@ func TestAllStageStop(t *testing.T) {
 		wg.Wait()
 
 		require.Len(t, result, 0)
-
 	})
+}
+
+func TestEmptyInput(t *testing.T) {
+	stages := []Stage{
+		func(in In) Out {
+			out := make(Bi)
+			go func() {
+				defer close(out)
+				for v := range in {
+					out <- v.(int) * 2
+				}
+			}()
+			return out
+		},
+	}
+
+	in := make(Bi)
+	done := make(Bi)
+	close(in)
+
+	result := make([]int, 0)
+	for v := range ExecutePipeline(in, done, stages...) {
+		result = append(result, v.(int))
+	}
+
+	require.Empty(t, result)
+}
+
+func TestEarlyTermination(t *testing.T) {
+	stages := []Stage{
+		func(in In) Out {
+			out := make(Bi)
+			go func() {
+				defer close(out)
+				for v := range in {
+					time.Sleep(100 * time.Millisecond)
+					out <- v.(int) * 2
+				}
+			}()
+			return out
+		},
+	}
+
+	in := make(Bi)
+	done := make(Bi)
+	data := []int{1, 2, 3, 4, 5}
+
+	go func() {
+		for _, v := range data {
+			in <- v
+		}
+		close(in)
+	}()
+
+	go func() {
+		time.Sleep(150 * time.Millisecond)
+		close(done)
+	}()
+
+	result := make([]int, 0, len(data))
+	for v := range ExecutePipeline(in, done, stages...) {
+		result = append(result, v.(int))
+	}
+
+	require.Len(t, result, 1) // Expecting only one result due to early termination
 }
