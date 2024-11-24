@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require" //nolint
 	"go.uber.org/goleak"
 )
 
@@ -66,5 +66,23 @@ func TestRun(t *testing.T) {
 
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+	})
+	t.Run("errorlimit0m", func(t *testing.T) {
+		tasks := []Task{
+			func() error { return nil },
+			func() error { return errors.New("error") },
+		}
+
+		err := Run(tasks, 2, 0)
+		require.ErrorIs(t, err, ErrErrorsLimitExceeded)
+	})
+	t.Run("errorlimitnegativem", func(t *testing.T) {
+		tasks := []Task{
+			func() error { return nil },
+			func() error { return errors.New("error") },
+		}
+
+		err := Run(tasks, 2, -1)
+		require.ErrorIs(t, err, ErrErrorsLimitExceeded)
 	})
 }
