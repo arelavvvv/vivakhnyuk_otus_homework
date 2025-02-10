@@ -46,7 +46,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	defer dstFile.Close()
 
 	srcInfo, err := srcFile.Stat()
-	if err != nil { // e.g. /dev/urandom
+	if !srcInfo.Mode().IsRegular() { // e.g. /dev/urandom
 		return ErrUnknownFileSize
 	}
 
