@@ -8,7 +8,6 @@ import (
 
 type UserRole string
 
-// Test the function on different structures and other types.
 type (
 	User struct {
 		ID     string `json:"id" validate:"len:36"`
@@ -42,10 +41,76 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in: User{
+				ID:    "123456789012345678901234567890123456",
+				Name:  "Vladislav",
+				Age:   25,
+				Email: "vladislav@example.com",
+				Role:  "admin",
+				Phones: []string{
+					"12345678901",
+					"09876543210",
+				},
+			},
+			expectedErr: nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			in: User{
+				ID:    "short",
+				Name:  "Valeriy",
+				Age:   17,
+				Email: "valeriy@example",
+				Role:  "user",
+				Phones: []string{
+					"1234567890",
+				},
+			},
+			expectedErr: ValidationErrors{
+				{Field: "ID", Err: fmt.Errorf("length must be exactly 36")},
+				{Field: "Age", Err: fmt.Errorf("must be at least 18")},
+				{Field: "Email", Err: fmt.Errorf("must match regexp ^\\w+@\\w+\\.\\w+$")},
+				{Field: "Role", Err: fmt.Errorf("must be one of admin,stuff")},
+				{Field: "Phones", Err: fmt.Errorf("length must be exactly 11")},
+			},
+		},
+		{
+			in: App{
+				Version: "1.0.0",
+			},
+			expectedErr: nil,
+		},
+		{
+			in: App{
+				Version: "1234",
+			},
+			expectedErr: ValidationErrors{
+				{Field: "Version", Err: fmt.Errorf("length must be exactly 5")},
+			},
+		},
+		{
+			in: Response{
+				Code: 200,
+				Body: "OK",
+			},
+			expectedErr: nil,
+		},
+		{
+			in: Response{
+				Code: 201,
+				Body: "Created",
+			},
+			expectedErr: ValidationErrors{
+				{Field: "Code", Err: fmt.Errorf("must be one of 200,404,500")},
+			},
+		},
+		{
+			in: Token{
+				Header:    []byte("header"),
+				Payload:   []byte("payload"),
+				Signature: []byte("signature"),
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +118,10 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			if fmt.Sprintf("%v", err) != fmt.Sprintf("%v", tt.expectedErr) {
+				t.Errorf("expected error %v, got %v", tt.expectedErr, err)
+			}
 		})
 	}
 }
