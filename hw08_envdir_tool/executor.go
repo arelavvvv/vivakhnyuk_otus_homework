@@ -17,7 +17,10 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 
 	for k, v := range env {
 		if v.NeedRemove {
-			continue
+			err := os.Unsetenv(k)
+			if err != nil {
+				return
+			}
 		}
 		command.Env = append(command.Env, k+"="+v.Value)
 	}
