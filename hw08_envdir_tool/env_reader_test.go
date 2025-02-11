@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	//nolint:depguard
 	"github.com/stretchr/testify/require"
 )
 

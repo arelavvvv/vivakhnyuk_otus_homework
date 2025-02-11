@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -40,7 +41,7 @@ func ReadDir(dir string) (Environment, error) {
 		reader := bufio.NewReader(f)
 		line, err := reader.ReadString('\n')
 
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
 
