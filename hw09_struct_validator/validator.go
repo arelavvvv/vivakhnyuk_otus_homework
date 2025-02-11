@@ -1,4 +1,5 @@
 package hw09structvalidator
+
 import (
 	"fmt"
 	"reflect"
@@ -78,18 +79,18 @@ func validateField(field reflect.Value, rule string) error {
 	ruleName, ruleValue := parts[0], parts[1]
 
 	switch ruleName {
-		case "len":
-			return validateLen(field, ruleValue)
-		case "regexp":
-			return validateRegexp(field, ruleValue)
-		case "in":
-			return validateIn(field, ruleValue)
-		case "min":
-			return validateMin(field, ruleValue)
-		case "max":
-			return validateMax(field, ruleValue)
-		default:
-			return fmt.Errorf("unknown validation rule")
+	case "len":
+		return validateLen(field, ruleValue)
+	case "regexp":
+		return validateRegexp(field, ruleValue)
+	case "in":
+		return validateIn(field, ruleValue)
+	case "min":
+		return validateMin(field, ruleValue)
+	case "max":
+		return validateMax(field, ruleValue)
+	default:
+		return fmt.Errorf("unknown validation rule")
 	}
 }
 
@@ -122,20 +123,20 @@ func validateRegexp(field reflect.Value, value string) error {
 func validateIn(field reflect.Value, value string) error {
 	values := strings.Split(value, ",")
 	switch field.Kind() { //nolint:exhaustive
-		case reflect.String:
-			for _, v := range values {
-				if field.String() == v {
-					return nil
-				}
+	case reflect.String:
+		for _, v := range values {
+			if field.String() == v {
+				return nil
 			}
-		case reflect.Int:
-			for _, v := range values {
-				if intValue, err := strconv.Atoi(v); err == nil && field.Int() == int64(intValue) {
-					return nil
-				}
+		}
+	case reflect.Int:
+		for _, v := range values {
+			if intValue, err := strconv.Atoi(v); err == nil && field.Int() == int64(intValue) {
+				return nil
 			}
-		default:
-			fmt.Println("unrecognized type")
+		}
+	default:
+		fmt.Println("unrecognized type")
 	}
 	return fmt.Errorf("must be one of %s", value)
 }
