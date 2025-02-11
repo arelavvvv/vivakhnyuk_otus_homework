@@ -1,5 +1,18 @@
 [logger]
-level = "INFO"
+logFile = "logs.log"
+logLevel = "error"
 
-# TODO
-# ...
+[storage]
+storageType = "in-database"
+
+[database]
+dbConnection = "pgsql"
+dbHost = "localhost"
+dbPort = 5432
+dbDatabase = "calendar"
+dbUsername = "calendar_user"
+dbPassword = "password"
+
+[server]
+httpHost = "localhost"
+httpPort = 8080
