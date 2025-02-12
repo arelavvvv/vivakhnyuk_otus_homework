@@ -23,6 +23,14 @@ func (v ValidationErrors) Error() string {
 	return sb.String()
 }
 
+type DeveloperError struct {
+	Err error
+}
+
+func (e DeveloperError) Error() string {
+	return fmt.Sprintf("developer error: %v", e.Err)
+}
+
 func Validate(v interface{}) error {
 	val := reflect.ValueOf(v)
 	if val.Kind() == reflect.Ptr {
@@ -48,6 +56,9 @@ func Validate(v interface{}) error {
 			if field.Kind() == reflect.Slice {
 				for j := 0; j < field.Len(); j++ {
 					if err := validateField(field.Index(j), rule); err != nil {
+						if _, ok := err.(DeveloperError); ok {
+							return err
+						}
 						validationErrors = append(validationErrors, ValidationError{
 							Field: fieldType.Name,
 							Err:   err,
@@ -56,6 +67,9 @@ func Validate(v interface{}) error {
 				}
 			} else {
 				if err := validateField(field, rule); err != nil {
+					if _, ok := err.(DeveloperError); ok {
+						return err
+					}
 					validationErrors = append(validationErrors, ValidationError{
 						Field: fieldType.Name,
 						Err:   err,
@@ -74,7 +88,7 @@ func Validate(v interface{}) error {
 func validateField(field reflect.Value, rule string) error {
 	parts := strings.SplitN(rule, ":", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("invalid validation rule format")
+		return DeveloperError{Err: fmt.Errorf("invalid validation rule format")}
 	}
 	ruleName, ruleValue := parts[0], parts[1]
 
@@ -90,7 +104,7 @@ func validateField(field reflect.Value, rule string) error {
 	case "max":
 		return validateMax(field, ruleValue)
 	default:
-		return fmt.Errorf("unknown validation rule")
+		return DeveloperError{Err: fmt.Errorf("unknown validation rule")}
 	}
 }
 
@@ -98,7 +112,7 @@ func validateLen(field reflect.Value, value string) error {
 	if field.Kind() == reflect.String {
 		length, err := strconv.Atoi(value)
 		if err != nil {
-			return err
+			return DeveloperError{Err: err}
 		}
 		if len(field.String()) != length {
 			return fmt.Errorf("length must be exactly %d", length)
@@ -111,7 +125,7 @@ func validateRegexp(field reflect.Value, value string) error {
 	if field.Kind() == reflect.String {
 		matched, err := regexp.MatchString(value, field.String())
 		if err != nil {
-			return err
+			return DeveloperError{Err: err}
 		}
 		if !matched {
 			return fmt.Errorf("must match regexp %s", value)
@@ -122,7 +136,7 @@ func validateRegexp(field reflect.Value, value string) error {
 
 func validateIn(field reflect.Value, value string) error {
 	values := strings.Split(value, ",")
-	switch field.Kind() { //nolint:exhaustive
+	switch field.Kind() {
 	case reflect.String:
 		for _, v := range values {
 			if field.String() == v {
@@ -136,7 +150,7 @@ func validateIn(field reflect.Value, value string) error {
 			}
 		}
 	default:
-		fmt.Println("unrecognized type")
+		return DeveloperError{Err: fmt.Errorf("unsupported type for 'in' validation")}
 	}
 	return fmt.Errorf("must be one of %s", value)
 }
@@ -145,7 +159,7 @@ func validateMin(field reflect.Value, value string) error {
 	if field.Kind() == reflect.Int {
 		min, err := strconv.Atoi(value)
 		if err != nil {
-			return err
+			return DeveloperError{Err: err}
 		}
 		if field.Int() < int64(min) {
 			return fmt.Errorf("must be at least %d", min)
@@ -158,7 +172,7 @@ func validateMax(field reflect.Value, value string) error {
 	if field.Kind() == reflect.Int {
 		max, err := strconv.Atoi(value)
 		if err != nil {
-			return err
+			return DeveloperError{Err: err}
 		}
 		if field.Int() > int64(max) {
 			return fmt.Errorf("must be at most %d", max)
