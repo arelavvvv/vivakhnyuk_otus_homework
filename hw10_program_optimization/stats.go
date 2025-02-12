@@ -1,23 +1,25 @@
 package hw10programoptimization
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 
+	//nolint:depguard
 	jsoniter "github.com/json-iterator/go"
 )
 
 var jsoniterConfig = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type User struct {
-	ID       int    `json:"Id"`
-	Name     string `json:"Name"`
-	Username string `json:"Username"`
-	Email    string `json:"Email"`
-	Phone    string `json:"Phone"`
-	Password string `json:"Password"`
-	Address  string `json:"Address"`
+	ID       int    `json:"Id"`       //nolint:tagliatelle
+	Name     string `json:"Name"`     //nolint:tagliatelle
+	Username string `json:"Username"` //nolint:tagliatelle
+	Email    string `json:"Email"`    //nolint:tagliatelle
+	Phone    string `json:"Phone"`    //nolint:tagliatelle
+	Password string `json:"Password"` //nolint:tagliatelle
+	Address  string `json:"Address"`  //nolint:tagliatelle
 }
 
 type DomainStat map[string]int
@@ -32,7 +34,7 @@ func countDomains(r io.Reader, domain string) (DomainStat, error) {
 
 	for {
 		var user User
-		if err := decoder.Decode(&user); err == io.EOF {
+		if err := decoder.Decode(&user); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			fmt.Printf("error decoding user: %v\n", err)
