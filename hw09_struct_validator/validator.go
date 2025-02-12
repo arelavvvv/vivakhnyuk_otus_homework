@@ -1,6 +1,7 @@
 package hw09structvalidator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -53,28 +54,15 @@ func Validate(v interface{}) error {
 
 		rules := strings.Split(tag, "|")
 		for _, rule := range rules {
-			if field.Kind() == reflect.Slice {
-				for j := 0; j < field.Len(); j++ {
-					if err := validateField(field.Index(j), rule); err != nil {
-						if _, ok := err.(DeveloperError); ok {
-							return err
-						}
-						validationErrors = append(validationErrors, ValidationError{
-							Field: fieldType.Name,
-							Err:   err,
-						})
-					}
+			if err := validateFieldWithRule(field, rule); err != nil {
+				var devErr DeveloperError
+				if errors.As(err, &devErr) {
+					return err
 				}
-			} else {
-				if err := validateField(field, rule); err != nil {
-					if _, ok := err.(DeveloperError); ok {
-						return err
-					}
-					validationErrors = append(validationErrors, ValidationError{
-						Field: fieldType.Name,
-						Err:   err,
-					})
-				}
+				validationErrors = append(validationErrors, ValidationError{
+					Field: fieldType.Name,
+					Err:   err,
+				})
 			}
 		}
 	}
@@ -83,6 +71,18 @@ func Validate(v interface{}) error {
 		return validationErrors
 	}
 	return nil
+}
+
+func validateFieldWithRule(field reflect.Value, rule string) error {
+	if field.Kind() == reflect.Slice {
+		for j := 0; j < field.Len(); j++ {
+			if err := validateField(field.Index(j), rule); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return validateField(field, rule)
 }
 
 func validateField(field reflect.Value, rule string) error {
@@ -136,7 +136,7 @@ func validateRegexp(field reflect.Value, value string) error {
 
 func validateIn(field reflect.Value, value string) error {
 	values := strings.Split(value, ",")
-	switch field.Kind() {
+	switch field.Kind() { //nolint:exhaustive
 	case reflect.String:
 		for _, v := range values {
 			if field.String() == v {
