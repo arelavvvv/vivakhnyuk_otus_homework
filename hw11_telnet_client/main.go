@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -42,52 +41,27 @@ func setupSignalHandling(client TelnetClient) {
 	}()
 }
 
-func handleReceiveError(client TelnetClient, err error) {
+func handleReceiveError(err error) {
 	if err == nil {
 		return
 	}
 
-	if !strings.Contains(err.Error(), "use of closed network connection") && !strings.Contains(err.Error(), "EOF") {
-		log.Printf("error receiving: %v", err)
-	}
-
-	if closeErr := client.Close(); closeErr != nil {
-		log.Printf("error closing client: %v", closeErr)
-	}
-
-	if !strings.Contains(err.Error(), "EOF") {
-		log.Println("...Connection was closed by peer")
-	}
-}
-
-func receiveData(client TelnetClient) {
-	err := client.Receive()
-	handleReceiveError(client, err)
-}
-
-func handleSendError(client TelnetClient, err error) {
-	if err == nil {
-		return
-	}
-
-	if !strings.Contains(err.Error(), "use of closed network connection") && !strings.Contains(err.Error(), "EOF") {
-		log.Printf("error sending: %v", err)
-	}
-
-	if closeErr := client.Close(); closeErr != nil {
-		log.Printf("error closing client: %v", closeErr)
-	}
+	log.Printf("error receiving: %v", err)
 }
 
 func sendData(client TelnetClient) {
 	if err := client.Send(); err != nil {
-		handleSendError(client, err)
+		handleReceiveError(err)
 	}
 }
 
 func startDataTransfer(client TelnetClient) {
 	go sendData(client)
-	go receiveData(client)
+	go func() {
+		if err := client.Receive(); err != nil {
+			handleReceiveError(err)
+		}
+	}()
 }
 
 func main() {
@@ -108,6 +82,5 @@ func main() {
 	setupSignalHandling(client)
 	startDataTransfer(client)
 
-	client.Receive()
-	client.Close()
+	select {}
 }

@@ -16,14 +16,13 @@ type TelnetClient interface {
 	Send() error
 	Receive() error
 }
+
 type TelnetClientImpl struct {
 	address  string
 	timeout  time.Duration
 	conn     net.Conn
 	stdin    io.ReadCloser
 	stdout   io.Writer
-	done     chan error
-	err      error
 	isClosed bool
 }
 
@@ -33,7 +32,6 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 		timeout:  timeout,
 		stdin:    in,
 		stdout:   out,
-		done:     make(chan error, 2),
 		isClosed: false,
 	}
 }
@@ -71,31 +69,20 @@ func (c *TelnetClientImpl) Send() error {
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				log.Println("...EOF")
-				c.done <- nil
 				return nil
 			}
-			c.err = fmt.Errorf("error reading from stdin: %w", err)
-			c.done <- c.err
-			return c.err
+			return fmt.Errorf("error reading from stdin: %w", err)
 		}
 
 		if _, err = io.WriteString(c.conn, str); err != nil {
-			c.err = fmt.Errorf("error writing to connection: %w", err)
-			c.done <- c.err
-			return c.err
+			return fmt.Errorf("error writing to connection: %w", err)
 		}
 	}
 }
 
 func (c *TelnetClientImpl) Receive() error {
-	defer func() {
-		c.done <- c.err
-	}()
-
 	if _, err := io.Copy(c.stdout, c.conn); err != nil {
-		c.err = err
-		return c.err
+		return fmt.Errorf("error receiving from connection: %w", err)
 	}
-
 	return nil
 }
