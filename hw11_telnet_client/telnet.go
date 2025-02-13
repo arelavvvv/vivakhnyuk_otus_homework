@@ -10,7 +10,13 @@ import (
 	"time"
 )
 
-type TelnetClient struct {
+type TelnetClient interface {
+	Connect() error
+	io.Closer
+	Send() error
+	Receive() error
+}
+type TelnetClientImpl struct {
 	address  string
 	timeout  time.Duration
 	conn     net.Conn
@@ -21,8 +27,8 @@ type TelnetClient struct {
 	isClosed bool
 }
 
-func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) *TelnetClient {
-	return &TelnetClient{
+func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
+	return &TelnetClientImpl{
 		address:  address,
 		timeout:  timeout,
 		stdin:    in,
@@ -32,7 +38,7 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 	}
 }
 
-func (c *TelnetClient) Connect() error {
+func (c *TelnetClientImpl) Connect() error {
 	dialer := net.Dialer{Timeout: c.timeout}
 	conn, err := dialer.Dial("tcp", c.address)
 	if err != nil {
@@ -43,7 +49,7 @@ func (c *TelnetClient) Connect() error {
 	return nil
 }
 
-func (c *TelnetClient) Close() error {
+func (c *TelnetClientImpl) Close() error {
 	if c.isClosed {
 		return nil
 	}
@@ -58,37 +64,37 @@ func (c *TelnetClient) Close() error {
 	return nil
 }
 
-func (c *TelnetClient) Send() error {
-	defer func() {
-		c.done <- c.err
-	}()
-
+func (c *TelnetClientImpl) Send() error {
 	reader := bufio.NewReader(c.stdin)
 	for {
 		str, err := reader.ReadString('\n')
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				log.Println("...EOF")
+				c.done <- nil
 				return nil
 			}
-			return fmt.Errorf("error reading from stdin: %w", err)
+			c.err = fmt.Errorf("error reading from stdin: %w", err)
+			c.done <- c.err
+			return c.err
 		}
 
-		_, err = io.WriteString(c.conn, str)
-		if err != nil {
-			return fmt.Errorf("error writing to connection: %w", err)
+		if _, err = io.WriteString(c.conn, str); err != nil {
+			c.err = fmt.Errorf("error writing to connection: %w", err)
+			c.done <- c.err
+			return c.err
 		}
 	}
 }
 
-func (c *TelnetClient) Receive() error {
+func (c *TelnetClientImpl) Receive() error {
 	defer func() {
 		c.done <- c.err
 	}()
 
-	_, err := io.Copy(c.stdout, c.conn)
-	if err != nil {
-		return err
+	if _, err := io.Copy(c.stdout, c.conn); err != nil {
+		c.err = err
+		return c.err
 	}
 
 	return nil

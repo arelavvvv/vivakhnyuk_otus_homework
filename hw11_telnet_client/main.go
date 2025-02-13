@@ -30,24 +30,19 @@ func parseCommandLineArgs() (string, time.Duration, error) {
 	return net.JoinHostPort(args[0], args[1]), timeout, nil
 }
 
-func setupSignalHandling(client *TelnetClient) {
+func setupSignalHandling(client TelnetClient) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-sigChan
 		log.Println("received SIGINT, exiting")
-		client.err = fmt.Errorf("SIGINT")
-		if !client.isClosed {
-			if err := client.Close(); err != nil {
-				log.Printf("error closing client: %v", err)
-			}
-		}
+		client.Close()
 		os.Exit(0)
 	}()
 }
 
-func handleReceiveError(client *TelnetClient, err error) {
+func handleReceiveError(client TelnetClient, err error) {
 	if err == nil {
 		return
 	}
@@ -56,10 +51,8 @@ func handleReceiveError(client *TelnetClient, err error) {
 		log.Printf("error receiving: %v", err)
 	}
 
-	if !client.isClosed {
-		if closeErr := client.Close(); closeErr != nil {
-			log.Printf("error closing client: %v", closeErr)
-		}
+	if closeErr := client.Close(); closeErr != nil {
+		log.Printf("error closing client: %v", closeErr)
 	}
 
 	if !strings.Contains(err.Error(), "EOF") {
@@ -67,12 +60,12 @@ func handleReceiveError(client *TelnetClient, err error) {
 	}
 }
 
-func receiveData(client *TelnetClient) {
+func receiveData(client TelnetClient) {
 	err := client.Receive()
 	handleReceiveError(client, err)
 }
 
-func handleSendError(client *TelnetClient, err error) {
+func handleSendError(client TelnetClient, err error) {
 	if err == nil {
 		return
 	}
@@ -81,20 +74,18 @@ func handleSendError(client *TelnetClient, err error) {
 		log.Printf("error sending: %v", err)
 	}
 
-	if !client.isClosed {
-		if closeErr := client.Close(); closeErr != nil {
-			log.Printf("error closing client: %v", closeErr)
-		}
+	if closeErr := client.Close(); closeErr != nil {
+		log.Printf("error closing client: %v", closeErr)
 	}
 }
 
-func sendData(client *TelnetClient) {
+func sendData(client TelnetClient) {
 	if err := client.Send(); err != nil {
 		handleSendError(client, err)
 	}
 }
 
-func startDataTransfer(client *TelnetClient) {
+func startDataTransfer(client TelnetClient) {
 	go sendData(client)
 	go receiveData(client)
 }
@@ -117,6 +108,6 @@ func main() {
 	setupSignalHandling(client)
 	startDataTransfer(client)
 
-	<-client.done // block until either send or receive returns
+	client.Receive()
 	client.Close()
 }
